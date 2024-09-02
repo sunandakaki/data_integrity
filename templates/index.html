@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Blockchain Demo</title>
+</head>
+<body>
+    <h1>Blockchain</h1>
+    <div id="blockchain">
+        <!-- Blocks will be inserted here by JavaScript -->
+    </div>
+    <h2>Mine</h2>
+    <input type="text" id="dataInput" placeholder="Enter data here">
+    <button id="mineButton" onclick="mineBlock()">Mine</button>
+    <script>
+        async function fetchBlockchain() {
+    const response = await fetch('/chain');
+    const data = await response.json();
+    const blocks = data.chain;
+    const blockchainDiv = document.getElementById('blockchain');
+    blockchainDiv.innerHTML = ''; // Clear the current blocks
+    
+    let allBlocksValid = true;  // Assume all blocks are valid initially
+
+    blocks.forEach(block => {
+        const blockDiv = document.createElement('div');
+        blockDiv.className = 'block';
+        blockDiv.innerHTML = `
+            <div>Block: #${block.index}</div>
+            <div>Nonce: ${block.nonce}</div>
+            <div>Data: <input type='text' value='${block.data}' oninput='updateData(${block.index}, this.value)' /></div>
+            <div>Prev: ${block.previous_hash}</div>
+            <div>Hash: ${block.hash} ${!block.is_valid ? "(Invalid)" : ""}</div>
+        `;
+
+        if (!block.is_valid) {
+            blockDiv.style.backgroundColor = '#FFC9BB'; // Mark the block in red if it's invalid
+            allBlocksValid = false;  // Set allBlocksValid to false if any block is invalid
+        } else {
+            blockDiv.style.backgroundColor = '#E4FDE1'; // Mark the block in green if it's valid
+        }
+        blockchainDiv.appendChild(blockDiv);
+    });
+
+    const mineButton = document.getElementById('mineButton');
+    mineButton.disabled = !allBlocksValid;  // Disable the mine button if any block is invalid
+}
+
+        async function updateData(index, newData) {
+            const response = await fetch('/update_data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ index: index, data: newData })
+            });
+            if (response.ok) {
+                fetchBlockchain(); // Refresh the blockchain display after update
+            }
+        }
+
+        async function mineBlock() {
+            const data = document.getElementById('dataInput').value;
+            const response = await fetch('/mine', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ data: data })
+            });
+            if (response.ok) {
+                fetchBlockchain(); // Refresh the blockchain display
+            }
+        }
+
+        window.onload = fetchBlockchain; // Load the blockchain when the page loads
+    </script>
+</body>
+</html>

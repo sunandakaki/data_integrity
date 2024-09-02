@@ -1,0 +1,11 @@
+body {
+    font-family: Arial, sans-serif;
+}
+.block {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+/* .invalid { */
+    /* background-color: red; */
+/* } */
